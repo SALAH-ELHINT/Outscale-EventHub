@@ -1,0 +1,18 @@
+{
+  "common": {
+    "create_new_one": "Crear un nuevo usuario",
+    "edit_one": "Editar el usuario",
+    "items": "Usuarios",
+    "new_one": "Nuevo usuario",
+    "read_all": "Lista de usuarios"
+  },
+  "form": {
+    "step1_label": "Información de inicio de sesión",
+    "step2_label": "Rol"
+  },
+  "list": {
+    "created_at": "Fecha de registro",
+    "email": "Correo electrónico",
+    "role": "Admin"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "home": "Accueil",
+  "language": "Langues",
+  "language_english": "Anglais",
+  "language_french": "Français",
+  "language_spanish": "Espagnol",
+  "logged": {
+    "logout": "Se déconnecter"
+  },
+  "login": "Connexion",
+  "register": "Inscription"
+}
