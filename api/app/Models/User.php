@@ -157,7 +157,19 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
 
     public function allTableReadPermissions(string $table)
     {
-        return $this->permissions()->select('permissions.id', 'permissions.name')->where('permissions.name', 'like', $table.'%read')->union($this->rolesTableReadPermissions($table)->select('permissions.id', 'permissions.name', 'permissions.id as pivot_permission_id', 'users_roles.user_id as pivot_user_id'));
+        return $this->permissions()
+            ->select('permissions.id', 'permissions.name')
+            ->where('permissions.name', 'like', $table.'%read')
+            ->union(
+                $this->rolesTableReadPermissions($table)
+                    ->getQuery()
+                    ->select([
+                        'permissions.id',
+                        'permissions.name',
+                        'permissions.id as pivot_permission_id',
+                        'users_roles.user_id as pivot_user_id'
+                    ])
+            );
     }
 
     public function hasRole(ROLE_ENUM $role): bool
@@ -221,5 +233,11 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
         }
 
         return $rules;
+    }
+
+    public function canManageEvent($event)
+    {
+        return $this->hasPermission('events', 'manage_participants') ||
+            $event->organizer_id === $this->id;
     }
 }
