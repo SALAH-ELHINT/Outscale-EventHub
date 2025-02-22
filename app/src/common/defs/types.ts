@@ -66,3 +66,43 @@ export interface NavItem {
   permission?: CRUD_ACTION;
   children?: NavItem[];
 }
+
+export interface BaseModel {
+  id: Id;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizedStats {
+  total_events: number;
+  published_events: number;
+  draft_events: number;
+  completed_events: number;
+  total_participants: number;
+}
+
+export interface ParticipationStats {
+  total_registrations: number;
+  confirmed_registrations: number;
+  pending_registrations: number;
+  attended_events: number;
+}
+
+export interface DashboardStatistics {
+  organized: OrganizedStats;
+  participation: ParticipationStats;
+}
+
+export interface DashboardUpcomingEvents {
+  organized_events: Event[];
+  registered_events: Event[];
+}
+
+export type EventStatus = 'all' | 'draft' | 'published' | 'completed' | 'cancelled';
+export type ParticipantStatus = 'all' | 'pending' | 'confirmed' | 'cancelled' | 'attended';
+
+export interface DashboardFilters {
+  status: EventStatus;
+  search: string;
+  participantStatus: ParticipantStatus;
+}

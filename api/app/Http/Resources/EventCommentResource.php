@@ -12,8 +12,13 @@ class EventCommentResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+    public function toArray($request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'content' => $this->content,
+            'user' => new UserResource($this->whenLoaded('user')),
+            'created_at' => $this->created_at->format('Y-m-d H:i:s')
+        ];
     }
 }

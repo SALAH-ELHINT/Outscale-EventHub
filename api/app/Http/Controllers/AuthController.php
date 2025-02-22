@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -48,51 +49,80 @@ class AuthController extends Controller
         try {
             $user = User::where('email', $request->input('email'))->first();
 
-            if (! $user || ! Hash::check($request->input('password'), $user->password)) {
-                return response()->json(['success' => false, 'errors' => [__('auth.failed')]]);
+            if (!$user || !Hash::check($request->input('password'), $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => [__('auth.failed')]
+                ]);
             }
+
             $admin = $request->input('admin');
-            if ($admin && ! $user->hasRole(ROLE::ADMIN)) {
-                return response()->json(['success' => false, 'errors' => [__('auth.not_admin')]]);
+            if ($admin && !$user->hasRole(ROLE::ADMIN)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => [__('auth.not_admin')]
+                ]);
             }
+
             $token = $user->createToken('authToken', ['expires_in' => 60 * 24 * 30])->plainTextToken;
 
-            return response()->json(['success' => true, 'message' => __('auth.login_success'), 'data' => ['token' => $token]]);
+            $user->update(['last_login_at' => now()]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'token' => $token,
+                    'user' => $user
+                ],
+                'message' => __('auth.login_success')
+            ]);
         } catch (\Exception $e) {
-            Log::error('Error caught in function AuthController.login: '.$e->getMessage());
+            Log::error('Error in AuthController.login: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
 
-            return response()->json(['success' => false, 'errors' => [__('common.unexpected_error')]]);
+            return response()->json([
+                'success' => false,
+                'errors' => [__('common.unexpected_error')]
+            ]);
         }
     }
 
     public function register(RegisterRequest $request)
     {
-
         try {
-            return DB::transaction(
-                function () use ($request) {
-                    $user = User::where('email', $request->email)->first();
-                    if ($user) {
-                        return response()->json(['success' => false, 'errors' => [__('auth.email_already_exists')]]);
-                    }
-                    $user = User::create(
-                        [
-                            'email' => $request->email,
-                            'password' => Hash::make($request->password),
-                        ]
-                    );
-                    $user->assignRole(ROLE::USER);
-                    $token = $user->createToken('authToken', ['expires_in' => 60 * 24 * 30])->plainTextToken;
+            return DB::transaction(function () use ($request) {
+                $user = User::create([
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'name' => $request->name
+                ]);
 
-                    return response()->json(['success' => true, 'data' => ['token' => $token], 'message' => __('auth.register_success')]);
+                $user->assignRole(ROLE::USER);
+
+                try {
+                    $user->sendEmailVerificationNotification();
+                    Log::info('Verification email sent to: ' . $user->email);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send verification email: ' . $e->getMessage());
                 }
-            );
-        } catch (\Exception $e) {
-            Log::error('Error caught in function AuthController.register: '.$e->getMessage());
-            Log::error($e->getTraceAsString());
 
-            return response()->json(['success' => false, 'errors' => [__('common.unexpected_error')]]);
+                $token = $user->createToken('authToken')->plainTextToken;
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'token' => $token,
+                        'user' => $user
+                    ],
+                    'message' => 'Registration successful. Please check your email to verify your account.'
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Registration error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                
+            ], 500);
         }
     }
 

@@ -4,12 +4,14 @@ import withAuth, { AUTH_MODE } from '@modules/auth/hocs/withAuth';
 import { NextPage } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'react-i18next';
+import Dashboard from './dashboard';
 
 const Index: NextPage = () => {
   const { t } = useTranslation(['home']);
   return (
     <>
       <PageHeader title={t('home:dashboard')} />
+      <Dashboard />
     </>
   );
 };

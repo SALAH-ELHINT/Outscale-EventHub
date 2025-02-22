@@ -2,6 +2,7 @@ import FormProvider from './FormProvider';
 
 export * from './RHFSelect';
 export * from './RHFCheckbox';
+export * from './RHFMultiSelect';
 
 export default FormProvider;
 

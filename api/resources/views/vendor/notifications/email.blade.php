@@ -1,13 +1,10 @@
 <x-mail::message>
-    {{-- Greeting --}}
     <h1 class="text-2xl font-bold text-gray-900 mb-4">@lang('common.hello')</h1>
 
-    {{-- Intro Lines --}}
     @foreach ($introLines as $line)
         <p class="text-gray-700 mb-4">{{ $line }}</p>
     @endforeach
 
-    {{-- Action Button --}}
     @isset($actionText)
         <?php
             $color = match ($level) {
@@ -23,12 +20,10 @@
         </div>
     @endisset
 
-    {{-- Outro Lines --}}
     @foreach ($outroLines as $line)
         <p class="text-gray-700 mt-4">{{ $line }}</p>
     @endforeach
 
-    {{-- Footer --}}
     @slot('footer')
         <div class="text-center text-gray-600 mt-8">
             <p>© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>

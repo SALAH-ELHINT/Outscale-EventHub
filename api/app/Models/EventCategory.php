@@ -5,8 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class EventCategory extends BaseModel
-{
-    public static $cacheKey = 'event_categories';
+{    protected $table = 'event_categories';
 
     protected $fillable = [
         'name',
@@ -26,4 +25,3 @@ class EventCategory extends BaseModel
         ];
     }
 }
-

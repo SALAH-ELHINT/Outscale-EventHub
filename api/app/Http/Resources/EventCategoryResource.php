@@ -12,8 +12,18 @@ class EventCategoryResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+    public function toArray($request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'events_count' => $this->when(
+                $request->route()->getName() === 'events.categories.index',
+                function() {
+                    return $this->events()->count();
+                }
+            )
+        ];
     }
 }

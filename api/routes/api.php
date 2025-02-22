@@ -1,12 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\EventParticipantController;
-use App\Http\Controllers\EventCommentController;
-use App\Http\Controllers\EventRatingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,23 +17,32 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('auth')->name('auth.')->group(
-    function () {
-        Route::controller(AuthController::class)->group(
-            function () {
-                Route::post('/login', 'login');
-                Route::post('/register', 'register');
-                Route::post('/request-password-reset', 'requestPasswordReset');
-                Route::post('/reset-password', 'resetPassword');
-                Route::get(
-                    '/disconnected', function () {
-                        return response()->json(['success' => false, 'errors' => [__('auth.disconnected')]]);
-                    }
-                );
-            }
-        );
-    }
-);
+Route::prefix('auth')->name('auth.')->group(function () {
+    Route::controller(AuthController::class)->group(function () {
+        Route::post('/register', 'register');
+        Route::post('/login', 'login');
+        Route::post('/request-password-reset', 'requestPasswordReset');
+        Route::post('/reset-password', 'resetPassword');
+        Route::get('/disconnected', function () {
+            return response()->json([
+                'success' => false,
+                'errors' => [__('auth.disconnected')]
+            ]);
+        });
+    });
+});
+
+Route::prefix('auth')->name('auth.')->group(function () {
+    Route::controller(VerificationController::class)->group(function () {
+        Route::get('/email/verify', 'verify')
+            ->middleware(['signed'])
+            ->name('verification.verify');
+
+        Route::post('/email/resend', 'resend')
+            ->middleware(['auth:sanctum', 'throttle:6,1'])
+            ->name('verification.resend');
+    });
+});
 
 Route::middleware('auth:api')->group(
     function () {
@@ -166,21 +172,3 @@ if (config('app.debug')) {
         }
     );
 }
-
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::prefix('events')->name('events.')->group(function () {
-        Route::get('/', [EventController::class, 'readAll'])->name('index');
-        Route::post('/', [EventController::class, 'createOne'])->name('store');
-        Route::get('/{id}', [EventController::class, 'readOne'])->name('show');
-        Route::put('/{id}', [EventController::class, 'updateOne'])->name('update');
-        Route::delete('/{id}', [EventController::class, 'deleteOne'])->name('destroy');
-
-        Route::post('/{id}/register', [EventController::class, 'register'])->name('register');
-        Route::put('/{eventId}/participants/{participantId}', [EventController::class, 'updateParticipantStatus'])
-            ->name('update-participant-status');
-        Route::get('/{id}/participants', [EventController::class, 'getParticipants'])->name('participants');
-
-        Route::post('/{id}/comments', [EventCommentController::class, 'store'])->name('comments.store');
-        Route::post('/{id}/ratings', [EventRatingController::class, 'store'])->name('ratings.store');
-    });
-});

@@ -21,21 +21,15 @@ const useFetch = <T>() => {
   const { createURLSearchParams } = useUtils();
 
   const makeFetch = useCallback(async (url: string, options?: FetchOptions): Promise<T | null> => {
-    setLoading(true); // Set loading to true
-    setError(null); // Clear previous errors
-    setResponse(null); // Clear previous response
+    setLoading(true);
+    setError(null);
+    setResponse(null);
     const displayProgress = options?.displayProgress ?? false;
     const verbose = options?.verbose ?? false;
 
     try {
       if (displayProgress) {
-        start(); // Start the progress bar
-      }
-
-      if (verbose) {
-        console.log('Starting fetch request...');
-        console.log('URL:', url);
-        console.log('Options:', options);
+        start();
       }
 
       let finalUrl = url;
@@ -44,10 +38,10 @@ const useFetch = <T>() => {
       if (options?.request?.data) {
         if (requestOptions.method === 'GET') {
           const queryParams = createURLSearchParams(options.request.data);
-          // Handle GET request by adding query parameters to the URL
-          const urlObj = new URL(url); // Parse the initial URL
-          urlObj.search += (urlObj.search ? '&' : '') + queryParams; // Add new parameters to existing parameters
-          finalUrl = urlObj.toString(); // Convert the URL object back to a string
+         
+          const urlObj = new URL(url);
+          urlObj.search += (urlObj.search ? '&' : '') + queryParams;
+          finalUrl = urlObj.toString();
         } else if (
           requestOptions.method === 'POST' ||
           requestOptions.method === 'PUT' ||
@@ -56,7 +50,7 @@ const useFetch = <T>() => {
         ) {
           if (!(options?.request?.data instanceof FormData)) {
             if (options?.request?.headers?.get('Content-Type') === 'application/json') {
-              // Handle POST, PUT, DELETE requests by setting the request body
+             
               requestOptions.body = JSON.stringify(options.request.data);
             } else if (
               options?.request?.headers?.get('Content-Type') === 'application/x-www-form-urlencoded'
@@ -64,7 +58,7 @@ const useFetch = <T>() => {
               const queryParams = createURLSearchParams(options.request.data);
               requestOptions.body = queryParams;
             } else {
-              // Most of the case it will be Content-Type=text/html, let's format the body correctly
+             
               requestOptions.body = JSON.stringify(options.request.data);
             }
           } else {
@@ -74,10 +68,6 @@ const useFetch = <T>() => {
       }
 
       const httpResponse = await fetch(finalUrl, requestOptions);
-
-      if (verbose) {
-        console.log('HTTP response status:', httpResponse.status);
-      }
 
       if (!httpResponse.ok && httpResponse.status !== 403) {
         throw new Error(`Error: ${httpResponse.statusText}`);
@@ -96,33 +86,26 @@ const useFetch = <T>() => {
         response = await httpResponse.text();
       }
 
-      setResponse(response); // Set the response state
-
-      if (verbose) {
-        console.log('Fetch successful, response:', response);
-      }
+      setResponse(response);
 
       return response;
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message); // Set the error message
+        setError(err.message);
         if (verbose) {
           console.error('Fetch error:', err.message);
         }
       } else {
-        setError('An error occurred'); // Set a generic error message
+        setError('An error occurred');
         if (verbose) {
           console.error('Fetch error: An error occurred');
         }
       }
       return null;
     } finally {
-      setLoading(false); // Set loading to false
+      setLoading(false);
       if (displayProgress) {
-        stop(); // Stop the progress bar
-      }
-      if (verbose) {
-        console.log('Fetch request completed.');
+        stop();
       }
     }
   }, []);

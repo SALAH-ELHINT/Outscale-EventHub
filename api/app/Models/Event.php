@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Traits\BroadcastsEventUpdates;
 
 class Event extends BaseModel
 {
-    use SoftDeletes;
+    use SoftDeletes, BroadcastsEventUpdates;
 
     public static $cacheKey = 'events';
 
@@ -27,8 +28,8 @@ class Event extends BaseModel
 
     protected $casts = [
         'date' => 'datetime',
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
+        'start_time' => 'date:H:i',
+        'end_time' => 'date:H:i',
         'max_participants' => 'integer',
         'current_participants' => 'integer',
     ];
@@ -81,5 +82,10 @@ class Event extends BaseModel
     public function isFull()
     {
         return $this->current_participants >= $this->max_participants;
+    }
+
+    public function userRegistration()
+    {
+        return $this->hasOne(EventParticipant::class)->where('user_id', auth()->id());
     }
 }

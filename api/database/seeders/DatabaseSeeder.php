@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call(self::seeders());
+        $this->call([
+            EventSystemSeeder::class
+        ]);
     }
 
     public static function seeders()

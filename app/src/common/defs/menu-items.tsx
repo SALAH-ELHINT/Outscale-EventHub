@@ -14,6 +14,12 @@ export const menuItems: NavGroup[] = [
         link: Routes.Common.Home,
       },
       {
+        text: "Events",
+        icon: <Group />,
+        link: Routes.Events.LIST,
+        namespace: Namespaces.Events,
+      },
+      {
         text: 'Users',
         icon: <Group />,
         link: Routes.Users.ReadAll,

@@ -4,7 +4,15 @@
     "plugin:@typescript-eslint/recommended",
     "prettier",
     "plugin:import/typescript",
-    "plugin:@next/next/recommended"
+    "plugin:@next/next/recommended",
+    "./tsconfig.json"
+  ],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".eslintrc.json",
+    "*.js",
+    "*.ts"
   ],
   "rules": {
     "react/no-unescaped-entities": 0,
@@ -33,14 +41,12 @@
         "tsx": "never"
       }
     ],
-    // only allow arrow functions
     "prefer-arrow-callback": ["error", { "allowNamedFunctions": false }],
     "func-style": ["error", "expression", { "allowArrowFunctions": true }],
     "react/jsx-props-no-spreading": 0,
     "react/no-array-index-key": 0,
     "react/self-closing-comp": 0,
     "arrow-body-style": 0,
-    // Allow unused vars everywhere if starts with underscore
     "no-unused-vars": [0, { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     "@typescript-eslint/no-unused-vars": [
       1,
@@ -88,16 +94,22 @@
   "plugins": ["@typescript-eslint", "prettier", "import"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json",
-    "tsconfigRootDir": "./"
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "project": "./tsconfig.eslint.json",
+    "tsconfigRootDir": "."
   },
   "root": true,
   "settings": {
     "import/resolver": {
-      "node": {
-        "paths": ["src"]
+      "typescript": {
+        "project": "./tsconfig.json",
+        "alwaysTryTypes": true
       },
-      "typescript": {}
+      "node": {
+        "paths": ["src"],
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
     }
   },
   "globals": {

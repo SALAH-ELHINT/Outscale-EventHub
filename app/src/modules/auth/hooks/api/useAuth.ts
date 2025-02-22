@@ -13,6 +13,13 @@ export interface LoginInput {
 export interface RegisterInput {
   email: string;
   password: string;
+  passwordConfirmation: string;
+}
+
+export interface RegisterRequestData {
+  email: string;
+  password: string;
+  password_confirmation: string;
 }
 
 export interface RequestPasswordResetInput {
@@ -45,11 +52,25 @@ interface AuthData {
     _input: ResetPasswordInput,
     _options?: FetchApiOptions
   ) => Promise<ApiResponse<{ token: string }>>;
+  verifyEmail: (url: string) => Promise<ApiResponse<any>>;
+  resendVerification: () => Promise<ApiResponse<any>>;
   initialized: boolean; // This is used to prevent the app from rendering before the useAuth initial fetch is complete
 }
 
 const useAuth = (): AuthData => {
   const authEnabled = process.env.NEXT_PUBLIC_AUTH_ENABLED === 'true';
+  const verifyEmail = async (url: string) => {
+      const response = await fetchApi(ApiRoutes.Auth.VerifyEmail + url);
+      return response;
+  };
+
+  const resendVerification = async () => {
+      const response = await fetchApi(ApiRoutes.Auth.ResendVerification, {
+          method: 'POST'
+      });
+      return response;
+  };
+
   if (!authEnabled) {
     return {
       initialized: true,
@@ -59,6 +80,8 @@ const useAuth = (): AuthData => {
       logout: async () => ({ success: false, errors: ['Auth is disabled'] }),
       requestPasswordReset: async () => ({ success: false, errors: ['Auth is disabled'] }),
       resetPassword: async () => ({ success: false, errors: ['Auth is disabled'] }),
+      verifyEmail,
+      resendVerification
     };
   }
 
@@ -66,51 +89,94 @@ const useAuth = (): AuthData => {
 
   const fetchApi = useApi();
 
-  const { data: user, mutate } = useSWR<User | null>(ApiRoutes.Auth.Me, async (url) => {
+  const { data: user, mutate } = useSWR<User | null>([ApiRoutes.Auth.Me], async (url: string) => {
     if (!localStorage.getItem('authToken')) {
       setInitialized(true);
       return null;
     }
-    const options: ApiOptions = {
-      method: 'POST',
-    };
-    const response = await fetchApi<{ user: User }>(url, options);
-    const { success, data } = response;
-    let returnedUser = null;
-    if (!success) {
-      localStorage.removeItem('authToken');
-    } else {
-      returnedUser = data?.user ?? null;
+    
+    try {
+      const options: ApiOptions = {
+        method: 'POST',
+      };
+      const response = await fetchApi<{ user: User }>(url, options);
+      const { success, data, errors } = response;
+      
+      // Only remove token if we get specific auth errors
+      if (!success && errors?.some(error => 
+        error.includes('unauthorized') || 
+        error.includes('invalid token') ||
+        error.includes('token expired')
+      )) {
+        localStorage.removeItem('authToken');
+        return null;
+      }
+      
+      return success ? data?.user ?? null : null;
+    } catch (error) {
+      console.error('Auth check error:', error);
+      // Don't remove token on network errors
+      return null;
+    } finally {
+      setInitialized(true);
     }
-    setInitialized(true);
-    return returnedUser;
+  }, {
+    // Add retry configuration
+    revalidateOnFocus: false, // Don't revalidate on window focus
+    // retryOnError: false, // Don't retry on error
+    shouldRetryOnError: false // Don't retry on error
   });
 
-  const login = async (input: LoginInput, options?: FetchApiOptions) => {
-    const response = await fetchApi<{ token: string }>(ApiRoutes.Auth.Login, {
-      data: input,
-      ...options,
-    });
+  // Add this near the top of useAuth
+  const removeAuthToken = () => {
+    localStorage.removeItem('authToken');
+    mutate(null, false); // Update SWR cache without revalidation
+  };
 
-    if (response.success && response.data?.token) {
-      localStorage.setItem('authToken', response.data.token);
-      mutate();
+  // Add this to handle token expiry
+  const handleAuthError = (error: any) => {
+    if (error?.response?.status === 401) {
+      removeAuthToken();
     }
+  };
 
-    return response;
+  // Add error handling to your fetchApi calls
+  const login = async (input: LoginInput, options?: FetchApiOptions) => {
+    try {
+      const response = await fetchApi<{ token: string }>(ApiRoutes.Auth.Login, {
+        data: input,
+        ...options,
+      });
+
+      if (response.success && response.data?.token) {
+        localStorage.setItem('authToken', response.data.token);
+        mutate();
+      }
+
+      return response;
+    } catch (error) {
+      handleAuthError(error);
+      throw error;
+    }
   };
 
   const register = async (input: RegisterInput, options?: FetchApiOptions) => {
+    const requestData: RegisterRequestData = {
+      email: input.email,
+      password: input.password,
+      password_confirmation: input.passwordConfirmation
+    };
+  
     const response = await fetchApi<{ token: string }>(ApiRoutes.Auth.Register, {
-      data: input,
+      data: requestData,
       ...options,
     });
-
+  
     if (response.success && response.data?.token) {
       localStorage.setItem('authToken', response.data.token);
       mutate();
     }
-
+  
     return response;
   };
 
@@ -148,6 +214,8 @@ const useAuth = (): AuthData => {
     requestPasswordReset,
     resetPassword,
     initialized,
+    verifyEmail,
+    resendVerification
   };
 };
 

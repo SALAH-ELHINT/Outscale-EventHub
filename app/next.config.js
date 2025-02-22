@@ -2,7 +2,6 @@
 const { i18n } = require('./next-i18next.config');
 
 const nextConfig = {
-  // output: 'export',
   reactStrictMode: true,
   images: {
     domains: ['localhost'],
@@ -13,6 +12,15 @@ const nextConfig = {
     ],
   },
   i18n,
+  async rewrites() {
+    return [
+      {
+        source: '/verify-email',
+        destination: '/verify-email',
+        locale: false,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

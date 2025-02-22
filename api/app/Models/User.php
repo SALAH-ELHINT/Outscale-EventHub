@@ -3,31 +3,38 @@
 namespace App\Models;
 
 use App\Enums\ROLE as ROLE_ENUM;
+use App\Notifications\EmailVerificationNotification;
 use App\Notifications\ResetPasswordNotification;
-use DB;
 use Illuminate\Auth\Authenticatable;
-use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Enum;
 use Laravel\Sanctum\HasApiTokens;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
-class User extends BaseModel implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
+class User extends BaseModel implements
+    AuthenticatableContract,
+    AuthorizableContract,
+    CanResetPasswordContract,
+    MustVerifyEmailContract
 {
     use Authenticatable;
     use Authorizable;
     use CanResetPassword;
     use HasApiTokens;
     use HasRelationships;
-    use MustVerifyEmail;
+    use MustVerifyEmailTrait;
     use Notifiable;
 
     public static $cacheKey = 'users';
+
 
     protected $fillable = [
         'email',
@@ -60,6 +67,7 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
     {
         return [
             'email_verified_at' => 'datetime',
+            'password' => 'hashed',
         ];
     }
 
@@ -239,5 +247,15 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
     {
         return $this->hasPermission('events', 'manage_participants') ||
             $event->organizer_id === $this->id;
+    }
+
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new EmailVerificationNotification);
+    }
+
+    public function getEmailForVerification()
+    {
+        return $this->email;
     }
 }

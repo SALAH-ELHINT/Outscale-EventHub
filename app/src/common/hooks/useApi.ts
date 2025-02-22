@@ -9,6 +9,7 @@ export interface ApiResponse<T> {
   message?: string;
   errors?: string[];
   data?: T;
+  redirect?: string;
 }
 export interface FetchApiOptions {
   verbose?: boolean;
@@ -45,9 +46,6 @@ const useApi = () => {
       const method = options?.method ?? (options?.data ? 'POST' : 'GET');
       const url = `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`;
       const verbose = options?.verbose ?? false;
-      if (verbose) {
-        console.log(`useApi: requesting ${url}`, options);
-      }
 
       const requestOptions = {
         method,
@@ -61,9 +59,6 @@ const useApi = () => {
         request: requestOptions,
       });
 
-      if (verbose) {
-        console.log(`useApi: response`, response);
-      }
       if (!response) {
         const errorMessage = t('common:error_occurred');
         enqueueSnackbar(errorMessage, { variant: 'error' });
