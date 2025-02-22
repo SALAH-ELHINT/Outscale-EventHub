@@ -212,13 +212,7 @@ GET /api/dashboard/registered-events
 2. Get SMTP credentials
 3. Update .env file with credentials
 
-### File Upload
-1. Configure storage:
-```bash
-php artisan storage:link
-```
-
-2. Update filesystem config in config/filesystems.php
+4. Update filesystem config in config/filesystems.php
 
 ## Testing
 
