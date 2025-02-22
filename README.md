@@ -76,7 +76,7 @@ php artisan migrate --seed
 
 1. Clone the repository:
 ```bash
-git clone https://github.com//eventhub-frontend.git
+git clone git@github.com:SALAH-ELHINT/Outscale-EventHub.git
 cd eventhub-frontend
 ```
 
