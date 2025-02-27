@@ -1,33 +1,54 @@
 import { Box, Container, Typography, useTheme } from '@mui/material';
 import { Calendar } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { useSnackbar } from 'notistack';
+import { useCallback } from 'react';
 
 import CustomBreadcrumbs from '@common/components/lib/navigation/CustomBreadCrumbs';
 import Routes from '@common/defs/routes';
-import CreateEventForm from '@modules/events/components/partials/CreateEventForm';
+import CreateEventForm, { CreateEventFormData } from '@modules/events/components/partials/CreateEventForm';
 import { EVENT_LABELS } from '@modules/events/defs/labels';
 import useEvents from '@modules/events/hooks/api/useEvents';
 
 const CreateEventPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const { createOne } = useEvents();
+  const { CreateOne } = useEvents();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = useCallback(async (data: CreateEventFormData): Promise<void> => {
     try {
+      if (!data.date) {
+        enqueueSnackbar('Event date is required', { variant: 'error' });
+        return;
+      }
+      
       const transformedData = {
         ...data,
-        date: data.date?.toDate() || null,
+        date: data.date.toISOString().split('T')[0],
       };
   
-      const response = await createOne(transformedData, { displaySuccess: true });
+      const response = await CreateOne(transformedData as any, { 
+        displayProgress: true, 
+        displaySuccess: true 
+      });
+      
       if (response.success) {
-        await router.push(Routes.Events.LIST);
+        enqueueSnackbar('Event created successfully!', { variant: 'success' });
+        await router.push({
+          pathname: Routes.Events.LIST
+        });
+      } else {
+        const errorMessage = response.message || 'Failed to create event';
+        enqueueSnackbar(errorMessage, { variant: 'error' });
       }
     } catch (error) {
       console.error("Failed to create event:", error);
+      enqueueSnackbar('An unexpected error occurred while creating the event', { 
+        variant: 'error' 
+      });
     }
-  };
+  }, [CreateOne, enqueueSnackbar, router]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>

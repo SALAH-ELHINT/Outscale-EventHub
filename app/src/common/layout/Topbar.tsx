@@ -52,29 +52,9 @@ const Topbar = () => {
   };
   const navItems: TopbarItem[] = [
     {
-      label: t('topbar:home'),
+      label: t('Home'),
       link: Routes.Common.Home,
       onClick: () => router.push(Routes.Common.Home),
-    },
-    {
-      label: t('topbar:language'),
-      dropdown: [
-        {
-          label: t('topbar:language_french'),
-          link: asPath,
-          value: 'fr',
-        },
-        {
-          label: t('topbar:language_english'),
-          link: `${asPath}`,
-          value: 'en',
-        },
-        {
-          label: t('topbar:language_spanish'),
-          link: `${asPath}`,
-          value: 'es',
-        },
-      ],
     },
     {
       label: 'Utilisateur',
@@ -275,7 +255,7 @@ const Topbar = () => {
                       }),
                     }}
                   >
-                    {t('topbar:login')}
+                    {t('login')}
                   </StyledListItemButton>
                 </ListItem>
                 <ListItem
@@ -302,7 +282,7 @@ const Topbar = () => {
                       },
                     }}
                   >
-                    {t('topbar:register')}
+                    {t('register')}
                   </Button>
                 </ListItem>
               </>
@@ -339,7 +319,7 @@ const Topbar = () => {
                     }}
                   >
                     <>
-                      <ListItemText>{navItems[2].label}</ListItemText>
+                      <ListItemText>Utilisateur</ListItemText>
                       <KeyboardArrowDown />
                       <List
                         className="dropdown-menu"
@@ -357,7 +337,7 @@ const Topbar = () => {
                           zIndex: 1000000,
                         }}
                       >
-                        {navItems[2].dropdown?.map((dropdownItem, dropdownItemIndex) => {
+                        {navItems[1].dropdown?.map((dropdownItem, dropdownItemIndex) => {
                           return (
                             <ListItem
                               key={dropdownItemIndex}
@@ -380,7 +360,7 @@ const Topbar = () => {
                                     backgroundColor: 'primary.dark',
                                     color: 'primary.contrastText',
                                   },
-                                  ...(navItems[2].dropdown?.length === dropdownItemIndex + 1 && {
+                                  ...(navItems[1].dropdown?.length === dropdownItemIndex + 1 && {
                                     borderBottomLeftRadius: 24,
                                     borderBottomRightRadius: 24,
                                   }),
@@ -554,7 +534,7 @@ const Topbar = () => {
                       }),
                     }}
                   >
-                    {t('topbar:login')}
+                    {t('login')}
                   </ListItemText>
                 </ListItemButton>
               </ListItem>
@@ -582,7 +562,7 @@ const Topbar = () => {
                   },
                 }}
               >
-                {t('topbar:register')}
+                {t('register')}
               </Button>
             </>
           ) : (
@@ -599,7 +579,7 @@ const Topbar = () => {
                 startIcon={<Logout />}
                 variant="outlined"
               >
-                {t('topbar:logged.logout')}
+                {t('logged.logout')}
               </Button>
             </>
           )}

@@ -67,8 +67,6 @@ class EventParticipantController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in EventParticipantController.index: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -115,8 +113,6 @@ class EventParticipantController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in EventParticipantController.show: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -173,8 +169,6 @@ class EventParticipantController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error in EventParticipantController.updateStatus: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]

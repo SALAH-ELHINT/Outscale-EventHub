@@ -35,7 +35,6 @@ class EventRatingController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in EventRatingController.index: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -49,7 +48,7 @@ class EventRatingController extends Controller
             return DB::transaction(function () use ($eventId, $request) {
                 $event = Event::findOrFail($eventId);
 
-                
+
                 $existingRating = $event->ratings()
                     ->where('user_id', Auth::id())
                     ->first();
@@ -78,7 +77,6 @@ class EventRatingController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error in EventRatingController.store: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -90,10 +88,10 @@ class EventRatingController extends Controller
     {
         try {
             return DB::transaction(function () use ($eventId, $ratingId, $request) {
-                
+
                 $event = Event::findOrFail($eventId);
 
-                
+
                 $rating = EventRating::where([
                     'id' => $ratingId,
                     'event_id' => $eventId,
@@ -107,7 +105,7 @@ class EventRatingController extends Controller
                     ], 404);
                 }
 
-                
+
                 $validated = $request->validate([
                     'rating' => 'required|integer|between:1,5',
                     'comment' => 'nullable|string|max:1000'
@@ -125,8 +123,6 @@ class EventRatingController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error in EventRatingController.update: ' . $e->getMessage());
-            Log::error($e->getTraceAsString()); 
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -138,10 +134,10 @@ class EventRatingController extends Controller
     {
         try {
             return DB::transaction(function () use ($eventId, $ratingId) {
-                
+
                 $event = Event::findOrFail($eventId);
 
-                
+
                 $rating = EventRating::where('id', $ratingId)
                     ->where('event_id', $eventId)
                     ->where(function($query) use ($event) {
@@ -172,8 +168,6 @@ class EventRatingController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error in EventRatingController.destroy: ' . $e->getMessage());
-            Log::error($e->getTraceAsString()); 
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]

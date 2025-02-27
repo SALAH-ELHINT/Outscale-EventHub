@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use Database\Seeders\Permissions\CrudPermissionSeeder;
-use Database\Seeders\Permissions\PermissionSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\App;
 
@@ -16,23 +14,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(self::seeders());
         $this->call([
-            EventSystemSeeder::class
-        ]);
-    }
-
-    public static function seeders()
-    {
-        $seeders = [
-            PermissionSeeder::class,
-            CrudPermissionSeeder::class,
             UserSeeder::class,
-        ];
-        if (! App::environment('prod') && ! App::environment('preprod')) {
-            $seeders = array_merge($seeders, []);
-        }
-
-        return $seeders;
+            EventCategorySeeder::class,
+            EventSeeder::class,
+            EventParticipantSeeder::class,
+            EventCommentSeeder::class,
+            EventRatingSeeder::class,
+        ]);
     }
 }

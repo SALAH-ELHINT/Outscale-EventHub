@@ -2,55 +2,87 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Event;
-use App\Models\User;
 use App\Models\EventParticipant;
-use Carbon\Carbon;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class EventParticipantSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
     {
-        $events = Event::all();
         $users = User::all();
+        $events = Event::all();
+
         $statuses = ['pending', 'confirmed', 'cancelled', 'attended'];
 
-        // Get the total number of available users
-        $totalUsers = $users->count();
-
         foreach ($events as $event) {
-            // Calculate maximum possible participants based on available users and event limit
-            $maxPossibleParticipants = min($totalUsers, $event->max_participants);
+            if ($event->status === 'completed') {
+                $usersForEvent = $users->random(min(8, $users->count()));
+                foreach ($usersForEvent as $index => $user) {
+                    if ($user->id !== $event->organizer_id) {
+                        $status = $index < 6 ? 'attended' : 'cancelled';
+                        $this->createParticipant($event, $user, $status);
+                    }
+                }
+            } elseif ($event->status === 'cancelled') {
+                $usersForEvent = $users->random(min(5, $users->count()));
+                foreach ($usersForEvent as $user) {
+                    if ($user->id !== $event->organizer_id) {
+                        $this->createParticipant($event, $user, 'cancelled');
+                    }
+                }
+            } elseif ($event->status === 'published') {
+                $confirmedCount = $event->current_participants;
+                $pendingCount = rand(2, 5);
+                $cancelledCount = rand(1, 3);
 
-            // Randomly select number of participants (between 1 and maxPossibleParticipants, max 5)
-            $participantCount = rand(1, min(5, $maxPossibleParticipants));
+                $totalParticipants = $confirmedCount + $pendingCount + $cancelledCount;
+                $usersForEvent = $users->random(min($totalParticipants, $users->count()));
 
-            // Get random users, limiting by the calculated participant count
-            $participants = $users->random($participantCount);
+                $userIndex = 0;
 
-            foreach ($participants as $user) {
-                $status = $statuses[array_rand($statuses)];
+                for ($i = 0; $i < $confirmedCount && $userIndex < count($usersForEvent); $i++) {
+                    $user = $usersForEvent[$userIndex];
+                    if ($user->id !== $event->organizer_id) {
+                        $this->createParticipant($event, $user, 'confirmed');
+                        $userIndex++;
+                    }
+                }
 
-                EventParticipant::firstOrCreate(
-                    [
-                        'event_id' => $event->id,
-                        'user_id' => $user->id
-                    ],
-                    [
-                        'status' => $status,
-                        'registration_date' => Carbon::now()->subDays(rand(1, 30))
-                    ]
-                );
+                for ($i = 0; $i < $pendingCount && $userIndex < count($usersForEvent); $i++) {
+                    $user = $usersForEvent[$userIndex];
+                    if ($user->id !== $event->organizer_id) {
+                        $this->createParticipant($event, $user, 'pending');
+                        $userIndex++;
+                    }
+                }
+
+                for ($i = 0; $i < $cancelledCount && $userIndex < count($usersForEvent); $i++) {
+                    $user = $usersForEvent[$userIndex];
+                    if ($user->id !== $event->organizer_id) {
+                        $this->createParticipant($event, $user, 'cancelled');
+                        $userIndex++;
+                    }
+                }
             }
-
-            // Update current_participants count for confirmed participants
-            $confirmedCount = $event->participants()->where('status', 'confirmed')->count();
-            $event->update(['current_participants' => $confirmedCount]);
         }
+    }
+
+    private function createParticipant($event, $user, $status)
+    {
+        $registrationDate = $event->date->copy()->subDays(rand(1, 30));
+
+        if ($registrationDate > Carbon::now()) {
+            $registrationDate = Carbon::now();
+        }
+
+        EventParticipant::create([
+            'event_id' => $event->id,
+            'user_id' => $user->id,
+            'status' => $status,
+            'registration_date' => $registrationDate
+        ]);
     }
 }

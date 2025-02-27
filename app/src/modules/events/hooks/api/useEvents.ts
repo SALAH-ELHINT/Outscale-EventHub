@@ -16,6 +16,7 @@ interface CreateEventInput {
   max_participants: number;
   status: string;
   image_id?: number;
+  categories?: number[];
 }
 
 interface UpdateEventInput extends CreateEventInput {
@@ -41,6 +42,9 @@ interface EventsHook extends UseItemsHook<Event, CreateEventInput, UpdateEventIn
   getEventStatistics: (options?: FetchApiOptions) => Promise<any>;
   getDashboardEventParticipants: (eventId: number, options?: FetchApiOptions) => Promise<any>;
   getUpcomingEvents: (options?: FetchApiOptions) => Promise<any>;
+  edit: (eventId: number, options?: FetchApiOptions) => Promise<any>;
+  getAllParticipantEvents: (filters?: object, options?: FetchApiOptions) => Promise<any>;
+  getActivitySummary: (options?: FetchApiOptions) => Promise<any>;
 }
 
 interface AddCommentRequest {
@@ -77,15 +81,22 @@ const useEvents = (opts?: Parameters<UseItems<Event, CreateEventInput, UpdateEve
 
   const itemsHook = useItems<Event, CreateEventInput, UpdateEventInput>(apiRoutes, opts);
 
-  const CreateOne = useCallback(async (data: CreateEventInput, options?: any) => {
-    return fetchApi(Events.CREATE, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      ...options,
-    });
+  const CreateOne = useCallback(async (data: CreateEventInput, options?: FetchApiOptions) => {
+    try {
+      return await fetchApi(Events.CREATE, {
+        method: 'POST',
+        data,
+        displaySuccess: options?.displaySuccess || false,
+        displayProgress: options?.displayProgress || false,
+      });
+    } catch (error) {
+      console.error('Error creating event:', error);
+      return {
+        success: false,
+        message: 'Failed to create event. Please try again.',
+        errors: [error instanceof Error ? error.message : 'Unknown error']
+      };
+    }
   }, [fetchApi]);
 
   const DeleteOne = useCallback(async (id: number, options?: FetchApiOptions) => {
@@ -203,7 +214,6 @@ const useEvents = (opts?: Parameters<UseItems<Event, CreateEventInput, UpdateEve
   const getParticipants = useCallback(async (eventId: number, options?: FetchApiOptions) => {
     return fetchApi(Events.PARTICIPANTS(eventId), {
       method: 'GET',
-      displaySuccess: true,
       ...options,
     });
   }, [fetchApi]);
@@ -211,7 +221,6 @@ const useEvents = (opts?: Parameters<UseItems<Event, CreateEventInput, UpdateEve
   const categories = useCallback(async () => {
     return fetchApi(Events.CATEGORIES, {
       method: 'GET',
-      displaySuccess: true,
     });
   }, [fetchApi]);
 
@@ -250,6 +259,28 @@ const useEvents = (opts?: Parameters<UseItems<Event, CreateEventInput, UpdateEve
     });
   }, [fetchApi]);
 
+  const edit = useCallback(async (eventId: number, options?: FetchApiOptions) => {
+    return fetchApi(Events.EDIT(eventId), {
+      method: 'GET',
+      ...options,
+    });
+  }, [fetchApi]);
+
+  const getAllParticipantEvents = useCallback(async (filters = {}, options?: FetchApiOptions) => {
+    return fetchApi(Events.DASHBOARD.PARTICIPANT_EVENTS, {
+      method: 'GET',
+      data: filters,
+      ...options,
+    });
+  }, [fetchApi]);
+
+  const getActivitySummary = useCallback(async (options?: FetchApiOptions) => {
+    return fetchApi(Events.DASHBOARD.ACTIVITY_SUMMARY, {
+      method: 'GET',
+      ...options,
+    });
+  }, [fetchApi]);
+
   return {
     ...itemsHook,
     CreateOne,
@@ -270,6 +301,9 @@ const useEvents = (opts?: Parameters<UseItems<Event, CreateEventInput, UpdateEve
     getEventStatistics,
     getDashboardEventParticipants,
     getUpcomingEvents,
+    edit,
+    getAllParticipantEvents,
+    getActivitySummary,
   };
 };
 

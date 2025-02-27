@@ -14,7 +14,7 @@ import {
 import dayjs from 'dayjs';
 import { FileText, MapPin, Tag, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider as RHFormProvider } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import * as yup from 'yup';
 
@@ -130,19 +130,20 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit }) => {
       image_id: null,
       categories: [],
     },
+    mode: 'onChange',
   });
 
   const {
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = methods;
 
-  const onSubmitHandler = async (data: CreateEventFormData, event?: React.BaseSyntheticEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
+  const onSubmitHandler = async (data: CreateEventFormData, e?: React.BaseSyntheticEvent) => {
+    // Explicitly prevent default form behavior
+    if (e) {
+      e.preventDefault();
     }
-
+    
     try {
       await onSubmit(data);
     } catch (error) {
@@ -167,226 +168,226 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSubmit }) => {
           bgcolor: 'background.paper',
         }}
       >
-        <form onSubmit={handleSubmit(onSubmitHandler)} noValidate>
-          <Box sx={{ p: 3 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Box sx={{ mb: 3 }}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                    <FileText size={20} />
-                    <Typography variant="h6">Basic Information</Typography>
-                  </Stack>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Enter the main details of your event
-                  </Typography>
-                </Box>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <RHFTextField
-                      name="title"
-                      label="Event Title"
-                      placeholder="Enter a descriptive title"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <RHFTextField
-                      name="description"
-                      label="Description"
-                      multiline
-                      rows={4}
-                      placeholder="Describe your event"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
+        <Box sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            {/* Form content here */}
+            <Grid item xs={12}>
+              <Box sx={{ mb: 3 }}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                  <FileText size={20} />
+                  <Typography variant="h6">Basic Information</Typography>
+                </Stack>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Enter the main details of your event
+                </Typography>
+              </Box>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <RHFTextField
+                    name="title"
+                    label="Event Title"
+                    placeholder="Enter a descriptive title"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
                 </Grid>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ mb: 3 }}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                    <MapPin size={20} />
-                    <Typography variant="h6">Location & Schedule</Typography>
-                  </Stack>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Set where and when your event will take place
-                  </Typography>
-                </Box>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <RHFTextField
-                      name="location"
-                      label="Location"
-                      placeholder="Enter the event location"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <RHFDatePicker
-                      name="date"
-                      label="Event Date"
-                      minDate={dayjs()}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <RHFTextField
-                      name="start_time"
-                      label="Start Time"
-                      type="time"
-                      InputLabelProps={{ shrink: true }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <RHFTextField
-                      name="end_time"
-                      label="End Time"
-                      type="time"
-                      InputLabelProps={{ shrink: true }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ mb: 3 }}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                    <Tag size={20} />
-                    <Typography variant="h6">Additional Details</Typography>
-                  </Stack>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Set the capacity and status of your event
-                  </Typography>
-                </Box>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <RHFTextField
-                      name="max_participants"
-                      label="Maximum Participants"
-                      type="number"
-                      InputProps={{
-                        inputProps: { min: 1 },
-                        startAdornment: (
-                          <Users
-                            size={20}
-                            style={{ marginRight: 8, color: theme.palette.text.secondary }}
-                          />
-                        ),
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <RHFSelect
-                      name="status"
-                      label="Status"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-                    >
-                      {statusOptions.map((option) => (
-                        <MenuItem
-                          key={option.value}
-                          value={option.value}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            py: 1.5,
-                            '&.Mui-selected': {
-                              bgcolor: alpha(theme.palette[option.color].main, 0.1),
-                              '&:hover': { bgcolor: alpha(theme.palette[option.color].main, 0.2) },
-                            },
-                            '&:hover': { bgcolor: alpha(theme.palette[option.color].main, 0.05) },
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: '50%',
-                              bgcolor: theme.palette[option.color].main,
-                              mr: 2,
-                              boxShadow: 1,
-                            }}
-                          />
-                          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                            {option.label}
-                          </Typography>
-                        </MenuItem>
-                      ))}
-                    </RHFSelect>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <RHFMultiSelect
-                      name="categories"
-                      label="Categories"
-                      placeholder="Select categories"
-                      options={categoryOptions}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 1,
-                        },
-                      }}
-                    />
-                  </Grid>
+                <Grid item xs={12}>
+                  <RHFTextField
+                    name="description"
+                    label="Description"
+                    multiline
+                    rows={4}
+                    placeholder="Describe your event"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
                 </Grid>
               </Grid>
             </Grid>
-          </Box>
 
-          <Divider />
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ mb: 3 }}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                  <MapPin size={20} />
+                  <Typography variant="h6">Location & Schedule</Typography>
+                </Stack>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Set where and when your event will take place
+                </Typography>
+              </Box>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <RHFTextField
+                    name="location"
+                    label="Location"
+                    placeholder="Enter the event location"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <RHFDatePicker
+                    name="date"
+                    label="Event Date"
+                    minDate={dayjs()}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <RHFTextField
+                    name="start_time"
+                    label="Start Time"
+                    type="time"
+                    InputLabelProps={{ shrink: true }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <RHFTextField
+                    name="end_time"
+                    label="End Time"
+                    type="time"
+                    InputLabelProps={{ shrink: true }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
 
-          <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.02) }}>
-            <Stack direction="row" justifyContent="flex-end" spacing={2}>
-              <LoadingButton
-                type="submit"
-                variant="contained"
-                loading={isSubmitting}
-                sx={{
-                  px: 4,
-                  py: 1,
-                  borderRadius: 1,
-                  boxShadow: theme.shadows[2],
-                  '&:hover': {
-                    boxShadow: theme.shadows[4],
-                  },
-                }}
-              >
-                Create Event
-              </LoadingButton>
-            </Stack>
-          </Box>
-        </form>
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ mb: 3 }}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                  <Tag size={20} />
+                  <Typography variant="h6">Additional Details</Typography>
+                </Stack>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Set the capacity and status of your event
+                </Typography>
+              </Box>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <RHFTextField
+                    name="max_participants"
+                    label="Maximum Participants"
+                    type="number"
+                    InputProps={{
+                      inputProps: { min: 1 },
+                      startAdornment: (
+                        <Users
+                          size={20}
+                          style={{ marginRight: 8, color: theme.palette.text.secondary }}
+                        />
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <RHFSelect
+                    name="status"
+                    label="Status"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
+                  >
+                    {statusOptions.map((option) => (
+                      <MenuItem
+                        key={option.value}
+                        value={option.value}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          py: 1.5,
+                          '&.Mui-selected': {
+                            bgcolor: alpha(theme.palette[option.color].main, 0.1),
+                            '&:hover': { bgcolor: alpha(theme.palette[option.color].main, 0.2) },
+                          },
+                          '&:hover': { bgcolor: alpha(theme.palette[option.color].main, 0.05) },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: theme.palette[option.color].main,
+                            mr: 2,
+                            boxShadow: 1,
+                          }}
+                        />
+                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                          {option.label}
+                        </Typography>
+                      </MenuItem>
+                    ))}
+                  </RHFSelect>
+                </Grid>
+                <Grid item xs={12}>
+                  <RHFMultiSelect
+                    name="categories"
+                    label="Categories"
+                    placeholder="Select categories"
+                    options={categoryOptions}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Divider />
+
+        <Box sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.02) }}>
+          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+            <LoadingButton
+              type="button" // Changed from "submit" to "button"
+              variant="contained"
+              loading={isSubmitting}
+              onClick={methods.handleSubmit(onSubmitHandler)}
+              sx={{
+                px: 4,
+                py: 1,
+                borderRadius: 1,
+                boxShadow: theme.shadows[2],
+                '&:hover': {
+                  boxShadow: theme.shadows[4],
+                },
+              }}
+            >
+              Create Event
+            </LoadingButton>
+          </Stack>
+        </Box>
       </Paper>
     </FormProvider>
   );

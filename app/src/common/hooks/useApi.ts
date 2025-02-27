@@ -15,6 +15,7 @@ export interface FetchApiOptions {
   verbose?: boolean;
   displaySuccess?: boolean;
   displayProgress?: boolean;
+  data?: Any;
 }
 export interface ApiOptions extends FetchApiOptions {
   headers?: HeadersInit;

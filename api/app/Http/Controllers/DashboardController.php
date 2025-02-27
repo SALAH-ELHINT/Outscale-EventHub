@@ -22,7 +22,10 @@ class DashboardController extends Controller
             $query = Event::with([
                 'organizer:id,email',
                 'categories:id,name',
-                'image'
+                'image',
+                'ratings',
+                'comments',
+                'participants'
             ])
             ->whereHas('participants', function($query) use ($userId) {
                 $query->where('user_id', $userId);
@@ -31,14 +34,12 @@ class DashboardController extends Controller
                 $query->where('status', 'confirmed');
             }]);
 
-
             if ($request->has('status')) {
                 $query->whereHas('participants', function($query) use ($userId, $request) {
                     $query->where('user_id', $userId)
                           ->where('status', $request->status);
                 });
             }
-
 
             $query->orderBy('date', 'asc')
                   ->orderBy('start_time', 'asc');
@@ -51,15 +52,92 @@ class DashboardController extends Controller
                 'data' => [
                     'items' => EventResource::collection($events),
                     'meta' => [
-                        'current_page' => $events->currentPage(),
-                        'last_page' => $events->lastPage(),
-                        'total_items' => $events->total(),
+                        'currentPage' => $events->currentPage(),
+                        'lastPage' => $events->lastPage(),
+                        'totalItems' => $events->total(),
                     ]
                 ]
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error in DashboardController.getRegisteredEvents: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'errors' => [__('common.unexpected_error')]
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all events where user is a participant, including all statuses
+     */
+    public function getAllParticipantEvents(Request $request)
+    {
+        try {
+            $userId = Auth::id();
+            $query = Event::with([
+                'organizer:id,email',
+                'categories:id,name',
+                'image',
+                'ratings',
+                'comments',
+                'participants' => function($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                },
+                'userRegistration'
+            ])
+            ->whereHas('participants', function($query) use ($userId) {
+                $query->where('user_id', $userId);
+            });
+
+            if ($request->has('eventStatus')) {
+                $query->where('status', $request->eventStatus);
+            }
+
+            if ($request->has('participantStatus')) {
+                $query->whereHas('participants', function($query) use ($userId, $request) {
+                    $query->where('user_id', $userId)
+                          ->where('status', $request->participantStatus);
+                });
+            }
+
+            if ($request->has('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('title', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('location', 'LIKE', "%{$searchTerm}%");
+                });
+            }
+
+            if ($request->has('dateFrom')) {
+                $query->where('date', '>=', $request->dateFrom);
+            }
+            if ($request->has('dateTo')) {
+                $query->where('date', '<=', $request->dateTo);
+            }
+
+            $sortField = $request->input('sortBy', 'date');
+            $sortOrder = $request->input('sortOrder', 'asc');
+            $query->orderBy($sortField, $sortOrder);
+
+            $perPage = $request->input('per_page', 10);
+            $events = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'items' => EventResource::collection($events),
+                    'meta' => [
+                        'currentPage' => $events->currentPage(),
+                        'lastPage' => $events->lastPage(),
+                        'totalItems' => $events->total(),
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in DashboardController.getAllParticipantEvents: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -76,6 +154,8 @@ class DashboardController extends Controller
             $query = Event::with([
                 'categories:id,name',
                 'image',
+                'ratings',
+                'comments',
                 'participants' => function($query) {
                     $query->with('user:id,email')
                          ->orderBy('registration_date', 'desc');
@@ -83,11 +163,18 @@ class DashboardController extends Controller
             ])
             ->where('organizer_id', Auth::id());
 
-
             if ($request->has('status')) {
                 $query->where('status', $request->status);
             }
 
+            if ($request->has('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('title', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('location', 'LIKE', "%{$searchTerm}%");
+                });
+            }
 
             $query->orderBy('date', 'asc')
                   ->orderBy('start_time', 'asc');
@@ -100,9 +187,9 @@ class DashboardController extends Controller
                 'data' => [
                     'items' => EventResource::collection($events),
                     'meta' => [
-                        'current_page' => $events->currentPage(),
-                        'last_page' => $events->lastPage(),
-                        'total_items' => $events->total(),
+                        'currentPage' => $events->currentPage(),
+                        'lastPage' => $events->lastPage(),
+                        'totalItems' => $events->total(),
                     ]
                 ]
             ]);
@@ -124,7 +211,6 @@ class DashboardController extends Controller
         try {
             $userId = Auth::id();
 
-
             $organizedStats = Event::where('organizer_id', $userId)
                 ->select(
                     DB::raw('COUNT(*) as total_events'),
@@ -134,7 +220,6 @@ class DashboardController extends Controller
                     DB::raw('SUM(current_participants) as total_participants')
                 )
                 ->first();
-
 
             $participationStats = DB::table('event_participants')
                 ->where('user_id', $userId)
@@ -146,21 +231,35 @@ class DashboardController extends Controller
                 )
                 ->first();
 
+            $firstDayOfMonth = now()->startOfMonth();
+            $lastDayOfMonth = now()->endOfMonth();
+
+            $thisMonthRegistrations = DB::table('event_participants')
+                ->where('user_id', $userId)
+                ->whereBetween('registration_date', [$firstDayOfMonth, $lastDayOfMonth])
+                ->count();
+
+            $thisMonthCreations = Event::where('organizer_id', $userId)
+                ->whereBetween('created_at', [$firstDayOfMonth, $lastDayOfMonth])
+                ->count();
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     'organized' => [
-                        'total_events' => $organizedStats->total_events,
-                        'published_events' => $organizedStats->published_events,
-                        'draft_events' => $organizedStats->draft_events,
-                        'completed_events' => $organizedStats->completed_events,
-                        'total_participants' => $organizedStats->total_participants ?? 0,
+                        'totalEvents' => $organizedStats->total_events,
+                        'publishedEvents' => $organizedStats->published_events,
+                        'draftEvents' => $organizedStats->draft_events,
+                        'completedEvents' => $organizedStats->completed_events,
+                        'totalParticipants' => $organizedStats->total_participants ?? 0,
+                        'thisMonthCreations' => $thisMonthCreations
                     ],
                     'participation' => [
-                        'total_registrations' => $participationStats->total_registrations,
-                        'confirmed_registrations' => $participationStats->confirmed_registrations,
-                        'pending_registrations' => $participationStats->pending_registrations,
-                        'attended_events' => $participationStats->attended_events,
+                        'totalRegistrations' => $participationStats->total_registrations,
+                        'confirmedRegistrations' => $participationStats->confirmed_registrations,
+                        'pendingRegistrations' => $participationStats->pending_registrations,
+                        'attendedEvents' => $participationStats->attended_events,
+                        'thisMonthRegistrations' => $thisMonthRegistrations
                     ]
                 ]
             ]);
@@ -187,9 +286,15 @@ class DashboardController extends Controller
                           ->with('user:id,email')
                           ->orderBy('registration_date', 'desc');
 
-
             if ($request->has('status')) {
                 $query->where('status', $request->status);
+            }
+
+            if ($request->has('search')) {
+                $searchTerm = $request->search;
+                $query->whereHas('user', function($q) use ($searchTerm) {
+                    $q->where('email', 'LIKE', "%{$searchTerm}%");
+                });
             }
 
             $perPage = $request->input('per_page', 10);
@@ -200,9 +305,9 @@ class DashboardController extends Controller
                 'data' => [
                     'items' => EventParticipantResource::collection($participants),
                     'meta' => [
-                        'current_page' => $participants->currentPage(),
-                        'last_page' => $participants->lastPage(),
-                        'total_items' => $participants->total(),
+                        'currentPage' => $participants->currentPage(),
+                        'lastPage' => $participants->lastPage(),
+                        'totalItems' => $participants->total(),
                     ]
                 ]
             ]);
@@ -225,18 +330,16 @@ class DashboardController extends Controller
             $userId = Auth::id();
             $today = now()->startOfDay();
 
-            
             $with = [
                 'organizer:id,email',
                 'categories:id,name',
                 'image',
-                'userRegistration',  
-                'ratings',          
-                'comments',         
+                'userRegistration',
+                'ratings',
+                'comments',
                 'participants'
             ];
 
-            
             $organizedEvents = Event::with($with)
                 ->where('organizer_id', $userId)
                 ->where('date', '>=', $today)
@@ -246,7 +349,6 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            
             $registeredEvents = Event::with($with)
                 ->whereHas('participants', function($query) use ($userId) {
                     $query->where('user_id', $userId)
@@ -259,11 +361,23 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
+            $recentlyUpdatedEvents = Event::with($with)
+                ->where(function($query) use ($userId) {
+                    $query->where('organizer_id', $userId)
+                        ->orWhereHas('participants', function($q) use ($userId) {
+                            $q->where('user_id', $userId);
+                        });
+                })
+                ->orderBy('updated_at', 'desc')
+                ->take(5)
+                ->get();
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'organized_events' => EventResource::collection($organizedEvents),
-                    'registered_events' => EventResource::collection($registeredEvents)
+                    'organizedEvents' => EventResource::collection($organizedEvents),
+                    'registeredEvents' => EventResource::collection($registeredEvents),
+                    'recentlyUpdatedEvents' => EventResource::collection($recentlyUpdatedEvents)
                 ]
             ]);
 
@@ -275,6 +389,86 @@ class DashboardController extends Controller
                 'success' => false,
                 'errors' => [__('common.unexpected_error')],
                 'debug' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Get activity summary for dashboard (recent activities)
+     */
+    public function getActivitySummary()
+    {
+        try {
+            $userId = Auth::id();
+
+            $recentRegistrations = DB::table('event_participants')
+                ->join('users', 'event_participants.user_id', '=', 'users.id')
+                ->join('events', 'event_participants.event_id', '=', 'events.id')
+                ->where('events.organizer_id', $userId)
+                ->where('event_participants.created_at', '>=', now()->subDays(30))
+                ->select(
+                    'event_participants.id',
+                    'event_participants.event_id',
+                    'event_participants.user_id',
+                    'event_participants.status',
+                    'event_participants.created_at',
+                    'users.email as user_email',
+                    'events.title as event_title'
+                )
+                ->orderBy('event_participants.created_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            $recentComments = DB::table('event_comments')
+                ->join('users', 'event_comments.user_id', '=', 'users.id')
+                ->join('events', 'event_comments.event_id', '=', 'events.id')
+                ->where('events.organizer_id', $userId)
+                ->where('event_comments.created_at', '>=', now()->subDays(30))
+                ->select(
+                    'event_comments.id',
+                    'event_comments.event_id',
+                    'event_comments.user_id',
+                    'event_comments.content',
+                    'event_comments.created_at',
+                    'users.email as user_email',
+                    'events.title as event_title'
+                )
+                ->orderBy('event_comments.created_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            $recentRatings = DB::table('event_ratings')
+                ->join('users', 'event_ratings.user_id', '=', 'users.id')
+                ->join('events', 'event_ratings.event_id', '=', 'events.id')
+                ->where('events.organizer_id', $userId)
+                ->where('event_ratings.created_at', '>=', now()->subDays(30))
+                ->select(
+                    'event_ratings.id',
+                    'event_ratings.event_id',
+                    'event_ratings.user_id',
+                    'event_ratings.rating',
+                    'event_ratings.created_at',
+                    'users.email as user_email',
+                    'events.title as event_title'
+                )
+                ->orderBy('event_ratings.created_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'recentRegistrations' => $recentRegistrations,
+                    'recentComments' => $recentComments,
+                    'recentRatings' => $recentRatings
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in DashboardController.getActivitySummary: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'errors' => [__('common.unexpected_error')]
             ], 500);
         }
     }

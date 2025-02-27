@@ -3,6 +3,9 @@ export type Id = number;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Any = any;
 
+export type EventStatus = 'all' | 'draft' | 'published' | 'completed' | 'cancelled';
+export type ParticipantStatus = 'all' | 'pending' | 'confirmed' | 'cancelled' | 'attended';
+
 export interface AnyObject {
   [key: string]: Any;
 }
@@ -88,21 +91,42 @@ export interface ParticipationStats {
   attended_events: number;
 }
 
+export interface DashboardFilters {
+  status: EventStatus;
+  search: string;
+  participantStatus: ParticipantStatus;
+}
+
+export interface OrganizedStats {
+  totalEvents: number;
+  publishedEvents: number;
+  draftEvents: number;
+  completedEvents: number;
+  totalParticipants: number;
+  thisMonthCreations: number;
+}
+
+export interface ParticipationStats {
+  totalRegistrations: number;
+  confirmedRegistrations: number;
+  pendingRegistrations: number;
+  attendedEvents: number;
+  thisMonthRegistrations: number;
+}
+
 export interface DashboardStatistics {
   organized: OrganizedStats;
   participation: ParticipationStats;
 }
 
 export interface DashboardUpcomingEvents {
-  organized_events: Event[];
-  registered_events: Event[];
+  organizedEvents: Event[];
+  registeredEvents: Event[];
+  recentlyUpdatedEvents: Event[];
 }
 
-export type EventStatus = 'all' | 'draft' | 'published' | 'completed' | 'cancelled';
-export type ParticipantStatus = 'all' | 'pending' | 'confirmed' | 'cancelled' | 'attended';
-
-export interface DashboardFilters {
-  status: EventStatus;
-  search: string;
-  participantStatus: ParticipantStatus;
+export interface ActivitySummary {
+  recentRegistrations: any[];
+  recentComments: any[];
+  recentRatings: any[];
 }

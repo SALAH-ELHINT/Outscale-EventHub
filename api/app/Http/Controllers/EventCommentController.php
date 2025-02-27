@@ -38,7 +38,6 @@ class EventCommentController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in EventCommentController@index: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -77,7 +76,6 @@ class EventCommentController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error in EventCommentController@store: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -116,7 +114,6 @@ class EventCommentController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error in EventCommentController@update: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]
@@ -151,7 +148,6 @@ class EventCommentController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('Error in EventCommentController@destroy: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => [__('common.unexpected_error')]

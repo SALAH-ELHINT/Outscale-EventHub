@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Resources\EventCategoryResource;
 
-class EventCategoryController extends Controller 
+class EventCategoryController extends Controller
 {
     public function index(Request $request)
     {
@@ -24,8 +24,6 @@ class EventCategoryController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in EventCategoryController.index: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
 
             return response()->json([
                 'success' => false,

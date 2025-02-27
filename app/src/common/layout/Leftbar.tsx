@@ -251,7 +251,7 @@ const Leftbar = (props: LeftbarProps) => {
             startIcon={<ExitToAppOutlined />}
             variant="text"
           >
-            {t('leftbar:logout')}
+            {t('Logout')}
           </Button>
         )}
       </Drawer>

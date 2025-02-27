@@ -31,8 +31,6 @@ class UserController extends CrudController
 
             return parent::createOne($request);
         } catch (\Exception $e) {
-            Log::error('Error caught in function UserController.createOne : '.$e->getMessage());
-            Log::error($e->getTraceAsString());
 
             return response()->json(['success' => false, 'errors' => [__('common.unexpected_error')]]);
         }
@@ -44,8 +42,6 @@ class UserController extends CrudController
             $roleEnum = ROLE::from($request->role);
             $item->syncRoles([$roleEnum]);
         } catch (\Exception $e) {
-            Log::error('Error caught in function UserController.afterCreateOne : '.$e->getMessage());
-            Log::error($e->getTraceAsString());
 
             return response()->json(['success' => false, 'errors' => [__('common.unexpected_error')]]);
         }
@@ -62,8 +58,6 @@ class UserController extends CrudController
 
             return parent::updateOne($id, $request);
         } catch (\Exception $e) {
-            Log::error('Error caught in function UserController.updateOne : '.$e->getMessage());
-            Log::error($e->getTraceAsString());
 
             return response()->json(['success' => false, 'errors' => [__('common.unexpected_error')]]);
         }
@@ -75,8 +69,6 @@ class UserController extends CrudController
             $roleEnum = ROLE::from($request->role);
             $item->syncRoles([$roleEnum]);
         } catch (\Exception $e) {
-            Log::error('Error caught in function UserController.afterUpdateOne : '.$e->getMessage());
-            Log::error($e->getTraceAsString());
 
             return response()->json(['success' => false, 'errors' => [__('common.unexpected_error')]]);
         }

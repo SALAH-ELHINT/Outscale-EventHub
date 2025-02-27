@@ -63,7 +63,10 @@ class BaseModel extends Model
                         function ($uploadRelation) use ($item) {
                             $relationName = $uploadRelation->name;
                             $upload = $item->$relationName;
-                            $upload->delete();
+
+                            if ($upload !== null) {
+                                $upload->delete();
+                            }
                         }
                     );
                 }

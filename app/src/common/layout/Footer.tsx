@@ -25,11 +25,11 @@ const Footer = () => {
 
   const footerItems: FooterItemProps[] = [
     {
-      label: t('footer:privacy_cookies'),
+      label: t('privacy_cookies'),
       link: Routes.Common.Home,
     },
     {
-      label: t('footer:terms_conditions'),
+      label: t('terms_conditions'),
       link: Routes.Common.Home,
     },
   ];
@@ -240,7 +240,7 @@ const Footer = () => {
           fontSize: '13px',
         }}
       >
-        {t('footer:copyright')}
+        {t('copyright')}
       </Box>
     </Box>
   );
